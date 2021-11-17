@@ -32,3 +32,8 @@ todo
 opencv = "0.60"
 ```
 
+## Acknowledgements
+- OpenCV
+    - https://github.com/opencv/opencv
+    - Licensed under the Apache License, Version 2.0
+    - Some images are copied from this project
