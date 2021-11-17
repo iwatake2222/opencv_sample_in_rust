@@ -1,9 +1,9 @@
 # OpenCV Sample Projects in Rust 
 
 # Resource
-- https://lib.rs/crates/opencv
 - https://docs.rs/opencv/0.60.0/opencv/
-
+- https://lib.rs/crates/opencv
+- https://github.com/twistedfall/opencv-rust/tree/master/examples
 
 # Setup
 ## Windows

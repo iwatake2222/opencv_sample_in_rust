@@ -18,6 +18,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut mat = Mat::default();
     imgproc::resize(&mat_src, &mut mat, core::Size { width: 100, height: 100, }, 0.0, 0.0, imgproc::INTER_LINEAR)?;
+    // imgproc::resize(&mat_src, &mut mat, core::Size::default(), 0.5, 0.5, imgproc::INTER_LINEAR)?;
     highgui::imshow("test0", &mat)?;
 
     let mut mat = Mat::default();
