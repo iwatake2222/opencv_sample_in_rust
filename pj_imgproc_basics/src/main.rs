@@ -28,8 +28,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mat = Mat::new_rows_cols_with_default(64, 128, core::CV_8UC3, core::Scalar::new(255., 0., 0., 0.))?;
     highgui::imshow("test2", &mat)?;
 
-    let mut mat = Mat::new_rows_cols_with_default(100, 200, core::CV_8UC3, core::Scalar::default())?;
+    let mut mat = Mat::new_rows_cols_with_default(200, 200, core::CV_8UC3, core::Scalar::default())?;
     imgproc::rectangle(&mut mat, core::Rect::new(10, 10, 50, 50), core::Scalar::new(255., 0., 0., 0.), 2, imgproc::LINE_8, 0)?;
+    imgproc::line(&mut mat, core::Point::new(50, 50), core::Point::new(50, 100), core::Scalar::new(255., 0., 0., 0.), 2, imgproc::LINE_8, 0)?;
+    imgproc::circle(&mut mat, core::Point::new(100, 100), 10, core::Scalar::new(255., 0., 0., 0.), 2, imgproc::LINE_8, 0)?;
+    imgproc::put_text(&mut mat, "TEST", core::Point::new(100, 100), highgui::QT_STYLE_NORMAL, 0.8, core::Scalar::new(255., 0., 0., 0.), 1, imgproc::LINE_8, false)?;
+    let text = String::from("ABC");
+    imgproc::put_text(&mut mat, &text, core::Point::new(100, 150), highgui::QT_STYLE_NORMAL, 0.8, core::Scalar::new(255., 0., 0., 0.), 1, imgproc::LINE_8, false)?;
     highgui::imshow("test3", &mat)?;
 
     highgui::wait_key(-1)?;
