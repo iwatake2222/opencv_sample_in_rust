@@ -14,11 +14,44 @@ use opencv::{prelude::*, core, highgui, imgcodecs, imgproc, types::{VectorOfPoin
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
+
+/* Model Parameters */
+const MODEL_FILENAME: &str = "../resource/mobilenetv2-1.0.onnx";
+const LABEL_FILENAME: &str = "../resource/imagenet_labels.txt";
+const MODEL_NORMALIZE_MEAN: (f64, f64, f64) = (0.485, 0.456, 0.406);
+const MODEL_NORMALIZE_NORM: (f64, f64, f64) = (0.229, 0.224, 0.225);
+const MODEL_WIDTH: i32 = 224;
+const MODEL_HEIGHT: i32 = 224;
+const MODEL_NAME_INPUT_0: &str = "data";
+const MODEL_NAME_OUTPUT_0: &str = "mobilenetv20_output_flatten0_reshape0";
+
+const TESTIMAGE_FILENAME: &str = "../resource/parrot.jpg";
+
+fn normalize(mat: &mut core::Mat, mean: (f64, f64, f64), norm: (f64, f64, f64)) -> core::Mat {
+    let mean = core::Scalar::from((mean.0, mean.1, mean.2));
+    let norm = core::Scalar::from((norm.0, norm.1, norm.2));
+
+    let mut mat_normalized = Mat::default();
+    let mut mat_normalized_sub = Mat::default();
+    let mut mat_normalized_div = Mat::default();
+    mat.convert_to(&mut mat_normalized, core::CV_32FC3, 1.0 / 255.0, 0.0).unwrap();
+    core::subtract(&mat_normalized, &mean, &mut mat_normalized_sub, &core::no_array(), -1).unwrap();
+    core::divide2(&mat_normalized_sub, &norm, &mut mat_normalized_div, 1.0, -1).unwrap();
+
+    // /* just to check calculation */
+    // println!("{:?}", mat.at_2d::<core::Vec3b>(10, 10).unwrap());
+    // println!("{:?}", mat_normalized.at_2d::<core::Vec3f>(10, 10).unwrap());
+    // println!("{:?}", mat_normalized_sub.at_2d::<core::Vec3f>(10, 10).unwrap());
+    // println!("{:?}", mat_normalized_div.at_2d::<core::Vec3f>(10, 10).unwrap());
+
+    mat_normalized_div
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     /* Read label */
     let mut label_list = Vec::<String>::new();
-    let label_file = File::open("../resource/imagenet_labels.txt")?;
+    let label_file = File::open(LABEL_FILENAME)?;
     let reader = BufReader::new(label_file);
     for (_, line) in reader.lines().enumerate() {
         label_list.push(line?);
@@ -26,36 +59,32 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // println!("{:?}", label_list);
 
     /* Read input image */
-    let mat = imgcodecs::imread("../resource/parrot.jpg", imgcodecs::IMREAD_COLOR)?;
+    let mat = imgcodecs::imread(TESTIMAGE_FILENAME, imgcodecs::IMREAD_COLOR)?;
 
     /* Pre Process */
     let mut mat_resized = Mat::default();
-    imgproc::resize(&mat, &mut mat_resized, core::Size { width: 224, height: 224, }, 0.0, 0.0, imgproc::INTER_LINEAR)?;
-    let mut mat_normalized = Mat::default();
-    mat_resized.convert_to(&mut mat_normalized, core::CV_32FC3, 1.0 / 255.0, 0.0)?;
-    // cv::subtract(img_src, cv::Scalar(cv::Vec<float, 3>(input_tensor_info.normalize.mean)), img_src);
-    // cv::multiply(img_src, cv::Scalar(cv::Vec<float, 3>(input_tensor_info.normalize.norm)), img_src);
-    let mat_blob = dnn::blob_from_image(&mat_normalized, 1.0f64, core::Size::default(), core::Scalar::default(), true, false, core::CV_32F)?;
+    imgproc::resize(&mat, &mut mat_resized, core::Size { width: MODEL_WIDTH, height: MODEL_HEIGHT }, 0.0, 0.0, imgproc::INTER_LINEAR)?;
+    let mat_normalized = normalize(&mut mat_resized, MODEL_NORMALIZE_MEAN, MODEL_NORMALIZE_NORM);
+    let mat_blob = dnn::blob_from_image(&mat_normalized, 1.0, core::Size::default(), core::Scalar::default(), true, false, core::CV_32F)?;
     
     /* Load model */
-    let mut net = dnn::read_net_from_onnx("../resource/mobilenetv2-1.0.onnx")?;
+    let mut net = dnn::read_net_from_onnx(MODEL_FILENAME)?;
 
     /* Feed input data */
-    net.set_input(&mat_blob, "data", 1.0, core::Scalar::default())?;
+    net.set_input(&mat_blob, MODEL_NAME_INPUT_0, 1.0, core::Scalar::default())?;
 
     /* Run inference */
     let mut output_blobs = core::Vector::<core::Mat>::new();
     let mut out_blob_names = core::Vector::<String>::new();
-    out_blob_names.push("mobilenetv20_output_flatten0_reshape0");
+    out_blob_names.push(MODEL_NAME_OUTPUT_0);
     net.forward(&mut output_blobs, &out_blob_names)?;
 
     /* Retrieve output */
-    let output_blob = &output_blobs.to_vec()[0];
-    println!("{:?}", output_blob);
-
+    let output_0 = &output_blobs.to_vec()[0];
+    println!("{:?}", output_0);
 
     /* Convert the output to vector */
-    let v = unsafe {std::slice::from_raw_parts(output_blob.ptr(0)? as *mut f32, output_blob.total()).to_vec()};
+    let v = unsafe {std::slice::from_raw_parts(output_0.ptr(0)? as *mut f32, output_0.total()).to_vec()};
     // println!("{:?}", v);
 
     /* Find the max score */
