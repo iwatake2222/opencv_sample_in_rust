@@ -9,19 +9,35 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
-
+#[allow(unused_imports)]
 use opencv::{prelude::*, core, highgui, imgcodecs, imgproc, videoio};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // let mut cam = videoio::VideoCapture::new(0, videoio::CAP_ANY)?;
-    let mut cam = videoio::VideoCapture::from_file("../resource/Megamind.avi", videoio::CAP_ANY)?;
-    if !videoio::VideoCapture::is_opened(&cam).unwrap() {
+    /* Read Video */
+    // let mut cap = videoio::VideoCapture::new(0, videoio::CAP_ANY)?;
+    let mut cap = videoio::VideoCapture::from_file("../resource/Megamind.avi", videoio::CAP_ANY)?;
+    if !videoio::VideoCapture::is_opened(&cap).unwrap() {
         panic!("Unable to open capture");
     }
+    
+    let mut fps = cap.get(videoio::CAP_PROP_FPS)?;
+    let width = cap.get(videoio::CAP_PROP_FRAME_WIDTH)? as i32;
+    let height = cap.get(videoio::CAP_PROP_FRAME_HEIGHT)? as i32;
+    println!("fps = {:}, width = {:}, height = {:}", fps, width, height);
+    fps = fps.min(120.0);
+    if fps == 0.0 {
+        fps = 30.0;
+    }
+
+    /* Write Video */
+    let mut writer = videoio::VideoWriter::new("test.mp4", videoio::VideoWriter::fourcc('M' as i8,'P' as i8,'4' as i8,'V' as i8)?
+        , fps, core::Size { width: width, height: height }, true)?;
+
     loop {
+        /* Read Video */
         let mut mat = Mat::default();
-        cam.read(&mut mat)?;
-        if mat.size()?.width <= 0 {
+        cap.read(&mut mat)?;
+        if mat.empty() {
             break;
         }
         highgui::imshow("test", &mat)?;
@@ -29,6 +45,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         if key == 'q' || key as u8 == 27 {
             break;
         }
+
+
+        /* Write Video */
+        if writer.is_opened()? {
+            writer.write(&mat)?;
+        }
+    }
+
+    /* Write Video */
+    if writer.is_opened()? {
+        writer.release()?;
     }
 
     Ok(())
