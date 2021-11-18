@@ -17,7 +17,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let width = 200;
     let height = 100;
 
-    // let mut mat = Mat::zeros(height, width, core::CV_8UC3)?;     // todo: how to convert MatExpr to Mat
     let mut mat = Mat::new_rows_cols_with_default(height, width, core::CV_8UC3, core::Scalar::new(255., 0., 0., 0.))?;
     println!("rows = {:}, cols = {:}, depth = {:}, channels = {:}, mat_step = {:?}, elem_size = {:?}, size = {:?}",
         mat.rows(), mat.cols(), mat.depth(), mat.channels(), mat.mat_step(), mat.elem_size(), mat.size());
@@ -88,15 +87,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
     highgui::imshow("test2", &mat)?;
 
-    /* Overlay using ROI */
-    let mut mat = Mat::new_rows_cols_with_default(height, width, core::CV_8UC3, core::Scalar::new(255., 0., 0., 0.))?;
-    let mut mat_roi = Mat::roi(&mat, core::Rect::new(10, 10, 50, 50))?;
-    imgproc::rectangle(&mut mat_roi, core::Rect::new(0, 0, 50, 50), core::Scalar::new(0., 255., 0., 0.), 2, imgproc::LINE_8, 0)?;
-    imgproc::circle(&mut mat, core::Point::new(30, 30), 10, core::Scalar::new(0., 255., 0., 0.), 2, imgproc::LINE_8, 0)?;
-    highgui::imshow("test3_roi", &mat_roi)?;
-    highgui::imshow("test3", &mat)?;
-    
-    
+
     highgui::wait_key(-1)?;
     Ok(())
 }
