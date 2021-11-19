@@ -16,7 +16,7 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 
 // use crate::detection_engine::boundnig_box::BoundingBox;
-use super::boundnig_box::BoundingBox;
+use super::boundnig_box::{BoundingBox, nms};
 
 
 /////////////////////////////////////////////////////////////////
@@ -44,6 +44,10 @@ impl DetectionEngine {
     const MODEL_HM_HEIGHT: i32  = Self::MODEL_WIDTH / Self::MODEL_HM_SCALE;
     const MODEL_HM_WIDTH: i32   = Self::MODEL_HEIGHT / Self::MODEL_HM_SCALE;
     const MODEL_HM_CHANNEL: i32 = 80;
+
+    /* Other Parameters */
+    const SCORE_THRESHOLD: f32 = 0.4;
+    const NMS_IOU_THRESHOLD: f32 = 0.6;
     
     pub fn new() -> Self {
         /* Load model */
@@ -113,43 +117,69 @@ impl DetectionEngine {
         //  println!("{}, {}", hm_list[10], hm_list.len());
         
         /* Decode bbox */
-        let threshold_score_logit: f32 = 0.1;
+        let mut bbox_list = Vec::<BoundingBox>::new();
+        let threshold_score_logit: f32 = Self::logit(Self::SCORE_THRESHOLD);
         let scale_w: f32 = mat.cols() as f32 / Self::MODEL_WIDTH as f32;
         let scale_h: f32 = mat.rows() as f32 / Self::MODEL_HEIGHT as f32;
-
-        let mut bbox_list = Vec::<BoundingBox>::new();
-        let mut index = 0;
-        for class_id in 0..Self::MODEL_HM_CHANNEL {
-            for hm_y in 0..Self::MODEL_HM_HEIGHT {
-                for hm_x in 0..Self::MODEL_HM_WIDTH {
-                    let score_logit = hm_list[index];
-                    index += 1;
-                    if score_logit > threshold_score_logit {
-                        let index_x: usize = (Self::MODEL_HM_WIDTH * hm_y + hm_x) as usize;
-                        let index_y: usize = index_x + (Self::MODEL_HM_HEIGHT * Self::MODEL_HM_WIDTH) as usize;
-                        let width = reg_wh_list[index_x];
-                        let height = reg_wh_list[index_y];
-                        let cx = hm_x as f32 + reg_xy_list[index_x];  /* no need to add +0.5f according to sample code */
-                        let cy = hm_y as f32 + reg_xy_list[index_y];
-                        let x0 = cx - width / 2.0;
-                        let y0 = cy - height / 2.0;
-                        // println!("{}, {}, {}, {}", x0, y0, width, height);
-                        let bbox = BoundingBox{
-                            class_id: class_id,
-                            // label: label_list[class_id as usize],
-                            label: String::from("a"),
-                            score: score_logit,
-                            x: (x0 * 4.0 * scale_w) as i32,
-                            y: (y0 * 4.0 * scale_h) as i32,
-                            w: (width * 4.0 * scale_w) as i32,
-                            h: (height * 4.0 * scale_h) as i32,
-                        };
-                        bbox_list.push(bbox);
+        for hm_y in 0 .. Self::MODEL_HM_HEIGHT {
+            for hm_x in 0 .. Self::MODEL_HM_WIDTH {
+                let mut max_class_id = -1;
+                let mut max_score_logit: f32 = std::f32::MIN;
+                for class_id in 0 .. Self::MODEL_HM_CHANNEL {
+                    let index_score: usize = (hm_x + Self::MODEL_HM_WIDTH * hm_y + Self::MODEL_HM_WIDTH * Self::MODEL_HM_HEIGHT * class_id) as usize;
+                    let score_logit = hm_list[index_score];
+                    // max_score_logit = max_score_logit.max(score_logit);
+                    if score_logit > max_score_logit {
+                        max_score_logit = score_logit;
+                        max_class_id = class_id;
                     }
+                }
+                if max_score_logit > threshold_score_logit && max_class_id >= 0 {
+                    let index_x: usize = (Self::MODEL_HM_WIDTH * hm_y + hm_x) as usize;
+                    let index_y: usize = index_x + (Self::MODEL_HM_HEIGHT * Self::MODEL_HM_WIDTH) as usize;
+                    let width = reg_wh_list[index_x];
+                    let height = reg_wh_list[index_y];
+                    let cx = hm_x as f32 + reg_xy_list[index_x];  /* no need to add +0.5f according to sample code */
+                    let cy = hm_y as f32 + reg_xy_list[index_y];
+                    let x0 = cx - width / 2.0;
+                    let y0 = cy - height / 2.0;
+                    // println!("{}, {}, {}, {}", x0, y0, width, height);
+                    let bbox = BoundingBox{
+                        class_id: max_class_id,
+                        label: self.label_list[max_class_id as usize].clone(),
+                        score: Self::sigmoid(max_score_logit),
+                        x: (x0 * Self::MODEL_HM_SCALE as f32 * scale_w) as i32,
+                        y: (y0 * Self::MODEL_HM_SCALE as f32 * scale_h) as i32,
+                        w: (width * Self::MODEL_HM_SCALE as f32 * scale_w) as i32,
+                        h: (height * Self::MODEL_HM_SCALE as f32 * scale_h) as i32,
+                    };
+                    bbox_list.push(bbox);
                 }
             }
         }
-        bbox_list
+
+        /* NMS */
+        let bbox_nms_list = nms(&mut bbox_list, Self::NMS_IOU_THRESHOLD);
+
+        bbox_nms_list
+    }
+
+    fn sigmoid(x: f32) -> f32 {
+        if x >= 0.0 {
+            return 1.0 / (1.0 + (-x).exp());
+        } else {
+            return x.exp() / (1.0 + x.exp());   /* to aovid overflow */
+        }
+    }
+
+    fn logit(x: f32) -> f32 {
+        if x <= 0.0 {
+            return std::f32::MIN;
+        } else if x >= 1.0 {
+            return std::f32::MAX;
+        } else {
+            return (x / (1.0 - x)).ln();
+        }
     }
 }
 
