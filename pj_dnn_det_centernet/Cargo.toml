@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 opencv = "0.60"
+rand = "0.8.4"

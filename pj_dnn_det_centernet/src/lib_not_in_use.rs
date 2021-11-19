@@ -11,3 +11,4 @@ limitations under the License.
 ==============================================================================*/
 
 pub mod detection_engine;
+pub mod helper_cv;

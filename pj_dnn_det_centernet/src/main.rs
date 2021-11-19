@@ -12,20 +12,29 @@ limitations under the License.
 
 /////////////////////////////////////////////////////////////////
 #[allow(unused_imports)]
-use opencv::{prelude::*, core, highgui, imgcodecs, imgproc};
+use opencv::{prelude::*, core, highgui, imgcodecs, imgproc, videoio};
 
 mod detection_engine;
 use detection_engine::detection_engine::DetectionEngine;
+mod helper_cv;
+use helper_cv::*;
 
 /////////////////////////////////////////////////////////////////
-const TESTIMAGE_FILENAME: &str = "../resource/dog.jpg";
+#[allow(dead_code)]
+enum CaptureSource<'a> {
+    Camera(i32),
+    Video(&'a str),
+}
 
 /////////////////////////////////////////////////////////////////
 fn main() {
-    test_single_image(TESTIMAGE_FILENAME);
+    test_with_single_image("../resource/dog.jpg");
+    // test_with_cap(CaptureSource::Camera(0));
+    // test_with_cap(CaptureSource::Video("../resource/Megamind.avi"));
 }
 
-fn test_single_image(image_filename: &str) {
+#[allow(dead_code)]
+fn test_with_single_image(image_filename: &str) {
     /* Create detection engine */
     let mut engine = DetectionEngine::new();
 
@@ -35,13 +44,69 @@ fn test_single_image(image_filename: &str) {
     /* Run detection */
     let bbox_list = engine.process(&mat_org);
 
+    /* Other */
+    let color_generator = ColorGenerator::new(20, 30);
+
     /* Draw bounding box */
     for bbox in bbox_list {
-        imgproc::rectangle(&mut mat_org, core::Rect::new(bbox.x, bbox.y, bbox.w, bbox.h), core::Scalar::new(255., 0., 0., 0.), 2, imgproc::LINE_8, 0).unwrap();
-        imgproc::put_text(&mut mat_org, &bbox.label, core::Point::new(bbox.x, bbox.y), highgui::QT_STYLE_NORMAL, 0.8, core::Scalar::new(255., 0., 0., 0.), 2, imgproc::LINE_8, false).unwrap();
+        let color = color_generator.get(bbox.class_id);
+        imgproc::rectangle(&mut mat_org, core::Rect::new(bbox.x, bbox.y, bbox.w, bbox.h), color, 2, imgproc::LINE_8, 0).unwrap();
+        draw_text(&mut mat_org, &bbox.label, core::Point::new(bbox.x, bbox.y - 20), 0.6, 1, core::Scalar::new(255., 255., 255., 255.), color, true); 
     }
 
     highgui::imshow("result", &mat_org).unwrap();
 
     highgui::wait_key(-1).unwrap();
+}
+
+#[allow(dead_code)]
+fn test_with_cap(capture_source: CaptureSource) {
+    /* Open capture */
+    let mut cap = match capture_source {
+        CaptureSource::Camera(id) => videoio::VideoCapture::new(id, videoio::CAP_ANY).unwrap(),
+        CaptureSource::Video(filename) => videoio::VideoCapture::from_file(filename, videoio::CAP_ANY).unwrap(),
+    };
+    if !videoio::VideoCapture::is_opened(&cap).unwrap() {
+        panic!("Unable to open capture");
+    }
+
+    /* Create detection engine */
+    let mut engine = DetectionEngine::new();
+
+    let color_generator = ColorGenerator::new(20, 30);
+
+    let mut t_all_previous = std::time::Instant::now();
+    loop {
+        /* Read image */
+        let mut mat_org = Mat::default();
+        cap.read(&mut mat_org).unwrap();
+        if mat_org.empty() {
+            break;
+        }
+
+        /* Run detection */
+        let t_detection_start = std::time::Instant::now();
+        let bbox_list = engine.process(&mat_org);
+        let t_detection = t_detection_start.elapsed();
+
+        /* Draw bounding box */
+        for bbox in bbox_list {
+            let color = color_generator.get(bbox.class_id);
+            imgproc::rectangle(&mut mat_org, core::Rect::new(bbox.x, bbox.y, bbox.w, bbox.h), color, 2, imgproc::LINE_8, 0).unwrap();
+            draw_text(&mut mat_org, &bbox.label, core::Point::new(bbox.x, bbox.y - 20), 0.6, 2, core::Scalar::new(255., 255., 255., 255.), color, true); 
+        }
+
+        /* Calculate processing time */
+        let t_all = t_all_previous.elapsed();
+        t_all_previous = std::time::Instant::now();
+        let text = format!("FPS = {:5.1}, Process = {:.1} ms", 1.0 / t_all.as_secs_f32(), t_detection.as_secs_f32() * 1000.0);
+        draw_text(&mut mat_org, &text, core::Point::new(0, 0), 0.8, 2, core::Scalar::new(255., 0., 0., 255.), core::Scalar::new(200., 200., 200., 255.), true); 
+
+        /* Display the result image */
+        highgui::imshow("result", &mat_org).unwrap();
+        let key = highgui::wait_key(1).unwrap() as u8 as char;
+        if key == 'q' || key as u8 == 27 {
+            break;
+        }
+    }
 }
