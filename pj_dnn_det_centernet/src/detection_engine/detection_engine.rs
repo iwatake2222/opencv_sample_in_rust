@@ -51,7 +51,10 @@ impl DetectionEngine {
     
     pub fn new() -> Self {
         /* Load model */
-        let net = dnn::read_net_from_onnx(Self::MODEL_FILENAME).unwrap();
+        let mut net = dnn::read_net_from_onnx(Self::MODEL_FILENAME).unwrap();
+        net.set_preferable_backend(dnn::DNN_BACKEND_OPENCV).unwrap();
+        net.set_preferable_target(dnn::DNN_TARGET_CPU).unwrap();
+        // net.set_preferable_target(dnn::DNN_TARGET_OPENCL).unwrap();
 
         /* Set output names */
         let mut out_blob_names = core::Vector::<String>::new();
