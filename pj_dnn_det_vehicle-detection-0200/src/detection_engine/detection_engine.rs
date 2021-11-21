@@ -1390,7 +1390,7 @@ impl DetectionEngine {
 
 
     /* Other Parameters */
-    const SCORE_THRESHOLD: f32 = 0.4;
+    const SCORE_THRESHOLD: f32 = 0.2;
     const NMS_IOU_THRESHOLD: f32 = 0.6;
 
     pub fn new() -> Self {

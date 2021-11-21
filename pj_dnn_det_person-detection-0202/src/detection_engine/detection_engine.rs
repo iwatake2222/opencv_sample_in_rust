@@ -5431,7 +5431,7 @@ for i in range(0, int(prio_box.shape[0] / 4)):
 
 
     /* Other Parameters */
-    const SCORE_THRESHOLD: f32 = 0.4;
+    const SCORE_THRESHOLD: f32 = 0.2;
     const NMS_IOU_THRESHOLD: f32 = 0.6;
 
     pub fn new() -> Self {
