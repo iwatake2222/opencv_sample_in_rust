@@ -1,0 +1,2 @@
+- Place ctdet_coco_dlav0_384.onnx file here
+- https://github.com/PINTO0309/PINTO_model_zoo/blob/main/179_person-detection-0202/download.sh

@@ -6,6 +6,9 @@
 - https://github.com/twistedfall/opencv-rust/tree/master/examples
 
 # Setup
+- See the steps descrived in https://lib.rs/crates/opencv
+- The followings are just for my memo
+
 ## Windows
 - Install LLVM
     - https://github.com/llvm/llvm-project/releases/download/llvmorg-13.0.0/LLVM-13.0.0-win64.exe
@@ -26,14 +29,15 @@
 ## Linux
 todo
 
-## Add crate
-```toml
-[dependencies]
-opencv = "0.60"
-```
-
 ## Acknowledgements
 - OpenCV
     - https://github.com/opencv/opencv
     - Licensed under the Apache License, Version 2.0
-    - Some images are copied from this project
+- PINTO_model_zoo
+    - https://github.com/PINTO0309/PINTO_model_zoo
+    - Licensed under the MIT License (MIT)
+    - Copyright (c) 2019 Katsuya Hyodo
+- YoutTube
+    - https://www.youtube.com/watch?v=tTuUjnISt9s
+    - Licensed under the Creative Commons license
+    - Copyright Dashcam Roadshow 2020

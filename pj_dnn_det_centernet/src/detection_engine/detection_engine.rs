@@ -30,8 +30,8 @@ pub struct DetectionEngine {
 
 impl DetectionEngine {
     /* Model Parameters */
-    const MODEL_FILENAME: &'static str = "../resource/ctdet_coco_dlav0_384.onnx";
-    const LABEL_FILENAME: &'static str = "../resource/label_coco_80.txt";
+    const MODEL_FILENAME: &'static str = "../resource/model/ctdet_coco_dlav0_384.onnx";
+    const LABEL_FILENAME: &'static str = "../resource/model/label_coco_80.txt";
     const MODEL_NORMALIZE_MEAN: (f64, f64, f64) = (0.485, 0.456, 0.406);
     const MODEL_NORMALIZE_NORM: (f64, f64, f64) = (0.229, 0.224, 0.225);
     const MODEL_WIDTH: i32 = 384;

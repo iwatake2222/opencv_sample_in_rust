@@ -16,8 +16,8 @@ use std::io::{BufRead, BufReader};
 
 
 /* Model Parameters */
-const MODEL_FILENAME: &str = "../resource/mobilenetv2-1.0.onnx";
-const LABEL_FILENAME: &str = "../resource/imagenet_labels.txt";
+const MODEL_FILENAME: &str = "../resource/model/mobilenetv2-1.0.onnx";
+const LABEL_FILENAME: &str = "../resource/model/imagenet_labels.txt";
 const MODEL_NORMALIZE_MEAN: (f64, f64, f64) = (0.485, 0.456, 0.406);
 const MODEL_NORMALIZE_NORM: (f64, f64, f64) = (0.229, 0.224, 0.225);
 const MODEL_WIDTH: i32 = 224;

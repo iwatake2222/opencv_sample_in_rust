@@ -28,7 +28,7 @@ pub struct DetectionEngine {
 
 impl DetectionEngine {
     /* Model Parameters */
-    const MODEL_FILENAME: &'static str = "../resource/vehicle-detection-0200_256x256.onnx";
+    const MODEL_FILENAME: &'static str = "../resource/model/vehicle-detection-0200_256x256.onnx";
     const MODEL_NORMALIZE_MEAN: (f64, f64, f64) = (0.0, 0.0, 0.0);
     const MODEL_NORMALIZE_NORM: (f64, f64, f64) = (1.0, 1.0, 1.0);
     const MODEL_WIDTH: i32 = 256;
