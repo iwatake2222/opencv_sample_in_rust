@@ -1,5 +1,5 @@
 [package]
-name = "pj_dnn_det_centernet"
+name = "pj_dnn_det_yolox"
 version = "0.1.0"
 edition = "2021"
 

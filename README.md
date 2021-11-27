@@ -27,7 +27,35 @@
     ```
 
 ## Linux
-todo
+- Manually install libraries into your environment
+
+```bash
+apt-get install -y clang libclang-dev libopencv-dev
+```
+
+- or, use Docker
+
+```dockerfile:Dockerfile
+FROM rust:1.56
+
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+  build-essential \
+  clang \
+  cmake \
+  curl \
+  git \
+  libclang-dev \
+  libopencv-dev \
+  nano
+```
+
+```bash
+docker build ./ -t rust_opencv_image
+docker create -v /mnt/c/iwatake/devel:/root/devel -e DISPLAY="192.168.1.2:0" -it --name=rust_opencv rust_opencv_image
+docker start rust_opencv
+docker exec -it rust_opencv bash
+docker stop rust_opencv
+```
 
 ## Acknowledgements
 - OpenCV
